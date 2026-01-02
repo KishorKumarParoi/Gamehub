@@ -83,12 +83,14 @@ echo "Step 4: Pull Kubernetes images and init cluster"
 # Pull Kubernetes images
 sudo kubeadm config images pull --cri-socket unix:///run/containerd/containerd.sock --kubernetes-version v1.33.0
 
+# (For worker Node limit is here)
+
 # Initialize cluster
 sudo kubeadm init \
   --pod-network-cidr=10.244.0.0/16 \
   --upload-certs \
   --kubernetes-version=v1.33.0 \
-  --control-plane-endpoint="$(hostname)" \
+  --control-plane-endpoint="54.227.229.250" \
   --ignore-preflight-errors=all \
   --cri-socket unix:///run/containerd/containerd.sock
 
@@ -107,3 +109,51 @@ kubectl apply -f https://github.com/coreos/flannel/raw/master/Documentation/kube
 kubectl taint nodes $(hostname) node-role.kubernetes.io/control-plane:NoSchedule-
 
 echo "Kubernetes cluster setup is complete!"
+---------------------------------------------------
+
+Output: 
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of control-plane nodes running the following command on each as root:
+
+  kubeadm join 10.0.10.127:6443 --token o4gu6y.u827eyqy11vkzii6 \
+        --discovery-token-ca-cert-hash sha256:397fc4b8e17a0456c8af484455dd46fb765122556cc54693da1f387e205f5b43 \
+        --control-plane --certificate-key 206174c1a0c78c58841f17ced88ca5cd54e81f80fbcc2d9f97564258036f4185
+
+Please note that the certificate-key gives access to cluster sensitive data, keep it secret!
+As a safeguard, uploaded-certs will be deleted in two hours; If necessary, you can use
+"kubeadm init phase upload-certs --upload-certs" to reload certs afterward.
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 10.0.10.127:6443 --token o4gu6y.u827eyqy11vkzii6 \
+        --discovery-token-ca-cert-hash sha256:397fc4b8e17a0456c8af484455dd46fb765122556cc54693da1f387e205f5b43
+Step 5: Apply Flannel Network
+namespace/kube-flannel created
+clusterrole.rbac.authorization.k8s.io/flannel created
+clusterrolebinding.rbac.authorization.k8s.io/flannel created
+serviceaccount/flannel created
+configmap/kube-flannel-cfg created
+daemonset.apps/kube-flannel-ds created
+node/ip-10-0-10-127 untainted
+Kubernetes cluster setup is complete!
+
+
+# run this command on worker node 
+       kubeadm join 10.0.10.127:6443 --token o4gu6y.u827eyqy11vkzii6 \
+        --discovery-token-ca-cert-hash sha256:397fc4b8e17a0456c8af484455dd46fb765122556cc54693da1f387e205f5b43 \
+        --control-plane --certificate-key 206174c1a0c78c58841f17ced88ca5cd54e81f80fbcc2d9f97564258036f4185
